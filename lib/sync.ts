@@ -101,7 +101,7 @@ export interface IterableObject<T> {
 
 function* iterateKeysInternal<T>(obj: IterableObject<T>): Iterable<string> {
   for (const key in obj) {
-    if (obj.hasOwnProperty(key)) {
+    if (Object.prototype.hasOwnProperty.call(obj, key)) {
       yield key;
     }
   }
