@@ -1,4 +1,4 @@
-import { AsyncIterator } from './async.ts';
+import { AsyncIterator } from "./async.ts";
 
 function* map<T, U>(gen: Iterable<T>, fn: (x: T) => U): Iterable<U> {
   for (const x of gen) {
@@ -8,7 +8,7 @@ function* map<T, U>(gen: Iterable<T>, fn: (x: T) => U): Iterable<U> {
 
 function* flatMap<T, U>(
   gen: Iterable<T>,
-  fn: (x: T) => Iterable<U>
+  fn: (x: T) => Iterable<U>,
 ): Iterable<U> {
   for (const x of gen) {
     yield* fn(x);
@@ -25,7 +25,7 @@ function* filter<T>(gen: Iterable<T>, fn: (x: T) => boolean): Iterable<T> {
 
 function* filterType<T, U extends T>(
   gen: Iterable<T>,
-  typeCheck: (x: T) => x is U
+  typeCheck: (x: T) => x is U,
 ): Iterable<U> {
   for (const x of gen) {
     if (typeCheck(x)) {
@@ -36,7 +36,7 @@ function* filterType<T, U extends T>(
 
 function* filterMap<T, U>(
   gen: Iterable<T>,
-  fn: (x: T) => U | undefined
+  fn: (x: T) => U | undefined,
 ): Iterable<U> {
   for (const x of gen) {
     const y = fn(x);
@@ -108,7 +108,7 @@ function* iterateKeysInternal<T>(obj: IterableObject<T>): Iterable<string> {
 }
 
 export function iterateKeys<T>(obj: IterableObject<T>): Iterator<string> {
-  return iterator(iterateKeysInternal(obj));
+  return Iterator.iterable(iterateKeysInternal(obj));
 }
 
 function* iterateArray<T>(array: T[]): Iterable<T> {
@@ -129,10 +129,6 @@ function* enumerate<T>(gen: Iterable<T>): Iterable<[T, number]> {
     yield [element, i];
     i += 1;
   }
-}
-
-export function iterator<T>(gen: Iterable<T>): Iterator<T> {
-  return new Iterator(gen);
 }
 
 function* iterateReadonlyArray<T>(array: readonly T[]): Iterable<Readonly<T>> {
@@ -186,7 +182,7 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   public static keys<T>(obj: IterableObject<T>): Iterator<string> {
-    return iterator(iterateKeysInternal(obj));
+    return Iterator.iterable(iterateKeysInternal(obj));
   }
 
   public static values<T>(obj: IterableObject<T>): Iterator<T> {
@@ -198,23 +194,23 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   public static array<T>(array: T[]): Iterator<T> {
-    return iterator(iterateArray(array));
+    return Iterator.iterable(iterateArray(array));
   }
 
   public static readonlyArray<T>(array: readonly T[]): Iterator<Readonly<T>> {
-    return iterator(iterateReadonlyArray(array));
+    return Iterator.iterable(iterateReadonlyArray(array));
   }
 
   public static set<T>(set: Set<T>): Iterator<T> {
-    return iterator(iterateSet(set));
+    return Iterator.iterable(iterateSet(set));
   }
 
-  public static from<T>(gen: Iterable<T>): Iterator<T> {
-    return iterator(gen);
+  public static iterable<T>(gen: Iterable<T>): Iterator<T> {
+    return new Iterator(gen);
   }
 
   public static range(low: number, high: number): Iterator<number> {
-    return Iterator.from(range(low, high));
+    return Iterator.iterable(range(low, high));
   }
 
   public *[Symbol.iterator](): Generator<T> {
@@ -224,31 +220,31 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   public concatenate<U>(other: Iterable<U>): Iterator<T | U> {
-    return Iterator.from(concatenate(this, other));
+    return Iterator.iterable(concatenate(this, other));
   }
 
   public enumerate(): Iterator<[T, number]> {
-    return iterator(enumerate(this.generator));
+    return Iterator.iterable(enumerate(this.generator));
   }
 
   public map<U>(fn: (x: T) => U): Iterator<U> {
-    return iterator(map(this.generator, fn));
+    return Iterator.iterable(map(this.generator, fn));
   }
 
   public flatMap<U>(fn: (x: T) => Iterable<U>): Iterator<U> {
-    return iterator(flatMap(this.generator, fn));
+    return Iterator.iterable(flatMap(this.generator, fn));
   }
 
   public filter(fn: (x: T) => boolean): Iterator<T> {
-    return iterator(filter(this.generator, fn));
+    return Iterator.iterable(filter(this.generator, fn));
   }
 
   public filterType<U extends T>(fn: (x: T) => x is U): Iterator<U> {
-    return iterator(filterType(this.generator, fn));
+    return Iterator.iterable(filterType(this.generator, fn));
   }
 
   public filterMap<U>(fn: (x: T) => U | undefined): Iterator<U> {
-    return iterator(filterMap(this.generator, fn));
+    return Iterator.iterable(filterMap(this.generator, fn));
   }
 
   public fold<U>(initial: U, fn: (acc: U, x: T) => U): U {
@@ -260,54 +256,54 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   /**
-   * Produces a new iterator which yields some number of elements from the
-   * beginning of this iterator.
+   * Produces a new Iterator.iterable which yields some number of elements from the
+   * beginning of this Iterator.iterable.
    * @param amount The number of elements to take
    */
   public take(amount: number): Iterator<T> {
-    return iterator(take(this.generator, amount));
+    return Iterator.iterable(take(this.generator, amount));
   }
 
   /**
-   * Produces a new iterator which yields values until one does not satisfy
+   * Produces a new Iterator.iterable which yields values until one does not satisfy
    * the given predicate. The first value not to satisfy the given predicate is
-   * not included in the new iterator.
+   * not included in the new Iterator.iterable.
    * @param fn A predicate function
    */
   public takeWhile(fn: (x: T) => boolean): Iterator<T> {
-    return iterator(takeWhile(this.generator, fn));
+    return Iterator.iterable(takeWhile(this.generator, fn));
   }
 
   /**
-   * Produces a new iterator which ignores some number of elements at the
+   * Produces a new Iterator.iterable which ignores some number of elements at the
    * beginning.
    * @param amount The number of elements to skip
    */
   public skip(amount: number): Iterator<T> {
-    return iterator(skip(this.generator, amount));
+    return Iterator.iterable(skip(this.generator, amount));
   }
 
   /**
-   * Produces a new iterator which ignores elements of this iterator while a
-   * given predicate holds. The first element of the new iterator will be the
+   * Produces a new Iterator.iterable which ignores elements of this Iterator.iterable while a
+   * given predicate holds. The first element of the new Iterator.iterable will be the
    * first element which does not satisfy the given predicate.
    * @param fn A predicate function
    */
   public skipWhile(fn: (x: T) => boolean): Iterator<T> {
-    return iterator(skipWhile(this.generator, fn));
+    return Iterator.iterable(skipWhile(this.generator, fn));
   }
 
   /**
-   * Produces a new iterator which executes the specified function on each
+   * Produces a new Iterator.iterable which executes the specified function on each
    * element before yielding it.
    * @param fn A function
    */
   public use(fn: (x: T) => void): Iterator<T> {
-    return iterator(use(this.generator, fn));
+    return Iterator.iterable(use(this.generator, fn));
   }
 
   /**
-   * Executes the specified function once on each element of this iterator.
+   * Executes the specified function once on each element of this Iterator.iterable.
    * @param fn A function
    */
   public forEach(fn: (x: T) => void): void {
@@ -317,7 +313,7 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   /**
-   * Produces an array containing all elements of this iterator.
+   * Produces an array containing all elements of this Iterator.iterable.
    */
   public toArray(): T[] {
     const arr = [];
@@ -328,7 +324,7 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   /**
-   * Determines whether at least one element of this iterator satisfies the
+   * Determines whether at least one element of this Iterator.iterable satisfies the
    * given predicate.
    * @param fn A predicate function
    */
@@ -337,7 +333,7 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   /**
-   * Determines whether every element of this iterator satisfies the given
+   * Determines whether every element of this Iterator.iterable satisfies the given
    * predicate.
    * @param fn A predicate function
    */
@@ -346,7 +342,7 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   /**
-   * Produces the first element of this iterator that satisfies the given predicate.
+   * Produces the first element of this Iterator.iterable that satisfies the given predicate.
    * @param fn A predicate function
    */
   public find(fn: (x: T) => boolean): T | undefined {
@@ -368,10 +364,10 @@ export class Iterator<T> implements Iterable<T> {
   }
 
   public zip<U>(b: Iterable<U>): Iterator<[T, U]> {
-    return Iterator.from(zip(this.generator, b));
+    return Iterator.iterable(zip(this.generator, b));
   }
 
   public toAsync(): AsyncIterator<T> {
-    return AsyncIterator.generator(toAsync(this.generator));
+    return AsyncIterator.iterable(toAsync(this.generator));
   }
 }

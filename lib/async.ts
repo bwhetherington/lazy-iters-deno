@@ -4,7 +4,7 @@ type MaybeAsyncIterable<T> = AsyncIterable<T> | Iterable<T>;
 
 async function* map<T, U>(
   gen: AsyncIterable<T>,
-  fn: (x: T) => MaybePromise<U>
+  fn: (x: T) => MaybePromise<U>,
 ): AsyncIterable<U> {
   for await (const x of gen) {
     yield await fn(x);
@@ -13,7 +13,7 @@ async function* map<T, U>(
 
 async function* flatMap<T, U>(
   gen: AsyncIterable<T>,
-  fn: (x: T) => MaybeAsyncIterable<U>
+  fn: (x: T) => MaybeAsyncIterable<U>,
 ): AsyncIterable<U> {
   for await (const x of gen) {
     yield* fn(x);
@@ -22,7 +22,7 @@ async function* flatMap<T, U>(
 
 async function* filter<T>(
   gen: AsyncIterable<T>,
-  fn: (x: T) => MaybePromise<boolean>
+  fn: (x: T) => MaybePromise<boolean>,
 ): AsyncIterable<T> {
   for await (const x of gen) {
     if (await fn(x)) {
@@ -33,7 +33,7 @@ async function* filter<T>(
 
 async function* filterType<T, U extends T>(
   gen: AsyncIterable<T>,
-  typeCheck: (x: T) => x is U
+  typeCheck: (x: T) => x is U,
 ): AsyncIterable<U> {
   for await (const x of gen) {
     if (typeCheck(x)) {
@@ -44,7 +44,7 @@ async function* filterType<T, U extends T>(
 
 async function* filterMap<T, U>(
   gen: AsyncIterable<T>,
-  fn: (x: T) => MaybePromise<U | undefined>
+  fn: (x: T) => MaybePromise<U | undefined>,
 ): AsyncIterable<U> {
   for await (const x of gen) {
     const y = await fn(x);
@@ -73,7 +73,7 @@ async function* take<T>(gen: AsyncIterable<T>, num: number): AsyncIterable<T> {
 
 async function* takeWhile<T>(
   gen: AsyncIterable<T>,
-  fn: (x: T) => MaybePromise<boolean>
+  fn: (x: T) => MaybePromise<boolean>,
 ): AsyncIterable<T> {
   for await (const x of gen) {
     if (await fn(x)) {
@@ -96,7 +96,7 @@ async function* skip<T>(gen: AsyncIterable<T>, num: number): AsyncIterable<T> {
 
 async function* skipWhile<T>(
   gen: AsyncIterable<T>,
-  fn: (x: T) => MaybePromise<boolean>
+  fn: (x: T) => MaybePromise<boolean>,
 ): AsyncIterable<T> {
   let conditionMet = false;
   for await (const x of gen) {
@@ -109,7 +109,7 @@ async function* skipWhile<T>(
 
 async function* use<T>(
   gen: AsyncIterable<T>,
-  fn: (x: T) => MaybePromise<void>
+  fn: (x: T) => MaybePromise<void>,
 ): AsyncIterable<T> {
   for await (const x of gen) {
     fn(x);
@@ -118,7 +118,7 @@ async function* use<T>(
 }
 
 async function* enumerate<T>(
-  gen: AsyncIterable<T>
+  gen: AsyncIterable<T>,
 ): AsyncIterable<[T, number]> {
   let i = 0;
   for await (const element of gen) {
@@ -129,7 +129,7 @@ async function* enumerate<T>(
 
 async function* zip<T, U>(
   a: AsyncIterable<T>,
-  b: AsyncIterable<U>
+  b: AsyncIterable<U>,
 ): AsyncIterable<[T, U]> {
   const aGen = a[Symbol.asyncIterator]();
   const bGen = b[Symbol.asyncIterator]();
@@ -147,7 +147,7 @@ async function* zip<T, U>(
 
 async function* debounce<T>(
   gen: AsyncIterable<T>,
-  time: number
+  time: number,
 ): AsyncIterable<T> {
   const timeMs = time * 1000;
   let lastTime = Date.now();
@@ -168,7 +168,7 @@ interface IteratorFunctions<T> {
 }
 
 function buildIterator<T>(
-  body: (fns: IteratorFunctions<T>) => void
+  body: (fns: IteratorFunctions<T>) => void,
 ): AsyncIterable<T> {
   let yieldQueue: T[] = [];
   let resolver = (_?: void) => {};
@@ -202,7 +202,7 @@ function buildIterator<T>(
     }
   };
 
-  body({$yield, $yieldAll, $return});
+  body({ $yield, $yieldAll, $return });
 
   return (async function* () {
     while (isRunning) {
@@ -229,18 +229,18 @@ export class AsyncIterator<T> implements AsyncIterable<T> {
     this.onComplete = onComplete;
   }
 
-  public static generator<T>(
+  public static iterable<T>(
     generator: AsyncIterable<T>,
-    onComplete?: () => void
+    onComplete?: () => void,
   ): AsyncIterator<T> {
     return new AsyncIterator(generator, onComplete);
   }
 
-  public static from<T>(
+  public static build<T>(
     body: (fns: IteratorFunctions<T>) => void,
-    onComplete?: () => void
+    onComplete?: () => void,
   ): AsyncIterator<T> {
-    return AsyncIterator.generator(buildIterator(body), onComplete);
+    return AsyncIterator.iterable(buildIterator(body), onComplete);
   }
 
   public async *[Symbol.asyncIterator](): AsyncGenerator<T> {
@@ -251,7 +251,7 @@ export class AsyncIterator<T> implements AsyncIterable<T> {
   }
 
   private chain<U>(gen: AsyncIterable<U>): AsyncIterator<U> {
-    return AsyncIterator.generator(gen, this.onComplete);
+    return AsyncIterator.iterable(gen, this.onComplete);
   }
 
   public debounce(time: number): AsyncIterator<T> {
@@ -279,14 +279,14 @@ export class AsyncIterator<T> implements AsyncIterable<T> {
   }
 
   public filterMap<U>(
-    fn: (x: T) => MaybePromise<U | undefined>
+    fn: (x: T) => MaybePromise<U | undefined>,
   ): AsyncIterator<U> {
     return this.chain(filterMap(this, fn));
   }
 
   public async fold<U>(
     initial: U,
-    fn: (acc: U, x: T) => MaybePromise<U>
+    fn: (acc: U, x: T) => MaybePromise<U>,
   ): Promise<U> {
     let output = initial;
     for await (const x of this) {
@@ -296,7 +296,7 @@ export class AsyncIterator<T> implements AsyncIterable<T> {
   }
 
   public join<U>(other: AsyncIterator<U>): AsyncIterator<T | U> {
-    const iter = AsyncIterator.from<T | U>(async ({$yield}) => {
+    const iter = AsyncIterator.build<T | U>(async ({ $yield }) => {
       const thisPromise = (async () => {
         for await (const x of this) {
           await $yield(x);
@@ -433,7 +433,7 @@ export class AsyncIterator<T> implements AsyncIterable<T> {
   }
 
   public zip<U>(b: AsyncIterable<U>): AsyncIterator<[T, U]> {
-    return AsyncIterator.generator(zip(this.generator, b));
+    return AsyncIterator.iterable(zip(this, b));
   }
 
   private cleanup(): void {
