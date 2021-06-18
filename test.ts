@@ -11,8 +11,4 @@ const fibs = AsyncIterator.from(async ({ $yield }) => {
   }
 });
 
-for await (const x of fibs.take(10)) {
-  console.log(x);
-}
-
-// await fibs.take(10).forEach(console.log);
+await fibs.take(10).forEach(console.log);
