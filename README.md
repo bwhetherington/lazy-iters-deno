@@ -7,7 +7,7 @@ This interface was inspired in large part by Rust's `Iterator` trait.
 ## Examples
 
 ```typescript
-import { Iterator } from "https://deno.land/x/lazy_iters@v0.1.0/mod.tss";
+import { Iterator } from "https://deno.land/x/lazy_iters@v0.1.0/mod.ts";
 
 // Create anything that can be iterated over using for ... of.
 const list = [1, 2, 3, 4, 5];
